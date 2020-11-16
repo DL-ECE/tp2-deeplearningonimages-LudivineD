@@ -625,13 +625,29 @@ Softmax
 class CNNModel(nn.Module):
     def __init__(self, classes=10):
         super().__init__()
-        # YOUR CODE HERE 
-        self.conv1 = NotImplemented
+        self.conv1 = nn.Conv2d(1,32,kernel_size=3, padding=1)
+        self.conv2 = nn.Conv2d(32,64,kernel_size=3, padding=1)
+        self.conv3 = nn.Conv2d(64,128,kernel_size=3, padding=1)
+        self.conv4 = nn.Conv2d(128,256,kernel_size=3, padding=1)
+        self.activation = nn.ReLU()
+        self.maxpool = nn.MaxPool2d(2,2)
+        self.fct = nn.Linear(64, 10)
 
     def forward(self, input):
         x = self.conv1(input)
-        # YOUR CODE HERE 
-        y = NotImplemented
+        y = self.activation(x)
+        y = self.conv2(y)
+        y = self.activation(y)
+        y = self.conv3(y)
+        y = self.activation(y)
+        y = self.maxpool(y)
+        y = y.reshape(y.size(0),-1)
+        y = self.maxpool(y)
+        y = self.activation(y)
+        y = self.conv4(y)
+        y = self.activation(y)
+        y = self.fct(y)
+        y= self.activation(y)
         return y
 
 def train_one_epoch(model, device, data_loader, optimizer):
@@ -642,8 +658,7 @@ def train_one_epoch(model, device, data_loader, optimizer):
         optimizer.zero_grad()
         output = model(data)
 
-        # YOUR CODE HERE 
-        loss = NotImplemented
+        loss = F.cross_entropy(output, target)
         loss.backward()
         train_loss += loss.item()
         optimizer.step()
@@ -663,8 +678,7 @@ def evaluation(model, device, data_loader):
     for num, (data, target) in tq.tqdm(enumerate(data_loader), total=len(data_loader.dataset)/data_loader.batch_size):
         data, target = data.to(device), target.to(device)
         output = model(data)
-        # YOUR CODE HERE 
-        eval_loss = NotImplemented
+        eval_loss = F.cross_entropy(output, target).item()
         prediction = output.argmax(dim=1)
         correct += torch.sum(prediction.eq(target)).item()
     result = {'loss': eval_loss / len(data_loader.dataset),
@@ -676,17 +690,17 @@ if __name__ == "__main__":
     
     # Network Hyperparameters 
     # YOUR CODE HERE 
-    minibatch_size = NotImplemented
-    nepoch = NotImplemented
-    learning_rate = NotImplemented
-    momentum = NotImplemented
+    minibatch_size = 5
+    nepoch = 20
+    learning_rate = 0.01
+    momentum = 0.9
 
 
     model = FFNNModel()
     model.to(device)
 
     # YOUR CODE HERE 
-    optimizer = NotImplemented
+    optimizer = optim.SGD(model.parameters(), lr=learning_rate, momentum=momentum)
 
     # Train for an number of epoch 
     for epoch in range(nepoch):
@@ -701,6 +715,15 @@ if __name__ == "__main__":
 """## Open Analysis
 Same as TP 1 please write a short description of your experiment
 
+
+J'ai commencé par reprendre les mêmes paramètres que pour le TP1 en mettant le momentum à 0.
+
+J'ai vu que le résultat stagnait sur la fin donc j'ai baissé le nepoch à 50.
+
+Puis j'ai mis le momentum à 10, mais cela faisait fortement chuter les résultats. J'ai eu des résultats bien meilleurs à 0.9
+
+J'ai ensuite rebaissé le nepoch à 20.
+
 # BONUS 
 
 Use some already trained CNN to segment YOUR image. 
@@ -708,7 +731,7 @@ Use some already trained CNN to segment YOUR image.
 In the cell below your can load a image to the notebook and use the given network to have the segmentation mask and plot it.
 """
 
-if __name__ = "__main__" :
+if __name__ == "__main__" :
     
     # TODO HERE: Upload an image to the notebook in the navigation bar on the left
     # `File` `Load File`and load an image to the notebook. 
